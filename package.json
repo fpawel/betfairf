@@ -13,11 +13,14 @@
     "@types/react-dom": "^16.0.5",
     "react": "^16.4.0",
     "react-dom": "^16.4.0",
+    "react-responsive-modal": "^3.0.2",
     "reconnecting-websocket": "^4.0.0-rc3"
   },
   "devDependencies": {
     "awesome-typescript-loader": "^5.0.0",
+    "css-loader": "^0.28.11",
     "source-map-loader": "^0.2.3",
+    "style-loader": "^0.21.0",
     "typescript": "^2.9.1"
   }
 }
