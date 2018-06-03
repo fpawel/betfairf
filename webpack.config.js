@@ -1,9 +1,11 @@
 module.exports = {
     mode:"development",
-    entry: "./src/index.tsx",
+    entry: ["./src/index.tsx", "./src/rpc.ts"],
     output: {
         filename: "bundle.js",
-        path: __dirname + "/dist"
+        path: "F:\\GOPATH\\src\\example.com\\frontsockets\\assets\\scripts"
+        //path: __dirname + "/dist"
+        //path: path.join(process.env.GOPATH, 'src', 'example.com', 'frontsockets', 'assets', 'scripts')
     },
 
     // Enable sourcemaps for debugging webpack's output.
