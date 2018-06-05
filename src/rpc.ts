@@ -1,13 +1,10 @@
 import ReconnectingWebSocket from 'reconnectingwebsocket';
 
+export type Handler = (params: any) => Result;
+
+type Result = { result: any } | {error:string};
+
 export namespace Server {
-
-    export type Handler = (params: any) => Result;
-
-    interface Result {
-        result?: any;
-        error?: string;
-    }
 
     export function register(functionName: string, h: Handler) {
 
@@ -23,28 +20,27 @@ export namespace Server {
         rpc[functionName] = h;
     }
 
-    register('SomeFoo', function (params: any) {
-        console.log('SomeFoo: ', params);
-        return {
-            result:"OK!",
-        };
-    });
 
-
+    const rpc: {
+        [K in string]: Handler;
+    } = {};
 
     const ws = new ReconnectingWebSocket('ws://localhost:8080/rpc/out', [], {
         debug: true,
         automaticOpen: false,
     });
 
+
+    rpc['NewMessage'] = (params) => {
+        console.log(`Ура! сервер ответил: "${params.Message}"`);
+        return {
+            result: { Message: "OK!"},
+        };
+    };
+
     ws.onmessage = (event) => {
 
-        if (!rpc) {
-            throw 'Rpc not defined'
-        }
-
-        let x  = processDataFromServer(event.data);
-        console.log( event.data, '-->',x);
+        let x = processDataFromServer(event.data);
         try {
             ws.send(JSON.stringify(x));
         } catch (e) {
@@ -56,101 +52,130 @@ export namespace Server {
 
     ws.open();
 
-    let rpc = (window as any).Rpc;
 
-    function processDataFromServer(data: string) {
+    function processDataFromServer(data: string): any {
         let x: {
             jsonrpc?: string,
             method?: string,
             params?: any,
-            id?: number,
+            id?: any,
         };
+
+        const response = (y: any) => {
+            y['jsonrpc'] = '2.0';
+            y['id'] = x.id;
+            return y;
+        };
+
+        const error = (code: number, message: string) => {
+            return response({error: {code: code, message: message}});
+        };
+
         try {
             x = JSON.parse(data);
         } catch (e) {
-            return {
-                jsonrpc: '2.0',
-                error: { code: -32700, message: "Parse error: " + e.toString() },
-                id:null,
-            };
+            return error(-32700, "parse error: " + e.toString());
         }
 
-        let {jsonrpc, method, params, id} = x;
-        if (!jsonrpc || jsonrpc !== '2.0' || !id || !method) {
-            return {
-                jsonrpc: '2.0',
-                error: {code: -32600, message: "Invalid JSON-RPC."}, id: id
-            };
+        let invalidJsonError = (s: String) => {
+            return error(-32600, "invalid JSON-RPC: " + s + ": " + data);
+        };
+
+        if (!x.jsonrpc) {
+            return invalidJsonError("'jsonrpc' not presented")
         }
-        const fun : Handler = rpc[method];
+        if (x.jsonrpc !== '2.0') {
+            return invalidJsonError("jsonrpc !== '2.0'");
+        }
+        if (!x.method) {
+            return invalidJsonError("'method' not presented");
+        }
+
+        const fun: Handler = rpc[x.method];
         if (!fun) {
-            return {
-                jsonrpc: '2.0',
-                error: {code: -32601, message: "Procedure not found: " + method}, id: id
-            };
+            return error(-32601, `method not found: ${x.method}`);
         }
 
-        let result : Result;
+        let result: Result;
 
         try {
-            result = fun(params);
+            result = fun(x.params);
         } catch (e) {
-            return {
-                jsonrpc: '2.0',
-                error: {code: -32000, message: "Web client error: " + e.toString()}, id: id
-            };
+            return error(-32001, "internal exception: " + e.toString());
         }
 
-        if (result.error) {
-            return {
-                jsonrpc: '2.0',
-                error: {code: -32603, message: "Internal JSON-RPC error: " + result.error}, id: id
-            };
+        if ('error' in result) {
+            return error(-32000, "internal error:  " + result.error);
         }
 
         if (result.result) {
-            return { jsonrpc: '2.0', result: result, id: id };
+            return response({result: result.result});
         }
 
-        return { jsonrpc: '2.0', method: method, id: id };
+        return response({method: x.method});
     }
 }
 
 export namespace Client {
+
+
+
+    let ws = new ReconnectingWebSocket('ws://localhost:8080/rpc/in', [], {debug: true, automaticOpen: false});
+    ws.onconnecting(() => {
+        console.log('WS: connecting')
+    });
+    ws.onopen = function () {
+        call('HelloService.Hello', {
+            'msg': 'The quick brown fox jumps over the lazy dog'
+        });
+    };
+    ws.open();
+
+    const callMethodID = new Map<string, number>();
+    let process = false;
     export function call(method: string, params: any) {
+
+        if (process) {
+            const prevOnMessage = ws.onmessage;
+            ws.onmessage = async (event) => {
+                prevOnMessage(event);
+                await call(method,params);
+            };
+            return
+        }
+
+        let id = callMethodID.get(method);
+        if (!id) {
+            id = 0;
+            callMethodID.set(method, id);
+        }
+        let awaitResult = new Promise<Result>(function (resolve, reject) {
+            ws.onmessage = (event) => {
+                process = false;
+                ws.onmessage = () => {};
+                try {
+                    const r : Result = JSON.parse(event.data) ;
+                    resolve( r );
+                } catch (e) {
+                    reject("parse json error: " + e.toString());
+                }
+            };
+            process = true;
+        });
         ws.send(JSON.stringify({
             jsonrpc: '2.0',
             method: method,
             params: params,
-            id: id++,
+            id: id,
         }));
+        return awaitResult;
     }
 
-    let ws = new ReconnectingWebSocket('ws://localhost:8080/rpc/in', [], {
-        debug: true,
-        automaticOpen: false,
-    });
 
-    ws.onopen = () => {
-
-        call('HelloService.Hello', {
-            'msg': 'The quick brown fox jumps over the lazy dog'
-        });
-
+    (window as any).callServer = async function (s: string) {
+        console.log( await call('HubService.Broadcast', { Message: s }) );
     };
 
-    ws.open();
-
-    ws.onconnecting(() => {
-        console.log('WS: connecting')
-    });
-
-    ws.onmessage = (event) => {
-        console.log('ws.onmessage:', event.data);
-        return undefined;
-    };
-
-    let id = 0;
 
 
 }
