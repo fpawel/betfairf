@@ -49,6 +49,20 @@ const columns : Column[] = [
         accessor:'away',
     },
     {
+        Header:'Время',
+        accessor:'time',
+        width : 130,
+        Cell: row => (
+            <div style={{
+                width: '100%',
+                textAlign: 'center',
+                fontStyle: 'italic',
+            }}>
+                {row.value}
+            </div>
+        )
+    },
+    {
         Header:'Чемпионат',
         accessor:'competition',
         width : 200,
@@ -57,6 +71,14 @@ const columns : Column[] = [
         Header:'Страна',
         accessor:'country',
         width : 120,
+        Cell: row => (
+            <div style={{
+                width: '100%',
+                textAlign: 'center',
+            }}>
+                {row.value}
+            </div>
+        )
     },
     {
         Header:'В паре',
@@ -119,7 +141,8 @@ const columns : Column[] = [
 
 export class Football extends React.Component<{}, state> {
 
-    constructor(){
+    constructor(props:{}){
+        super(props);
         let x = {
             ws : new ReconnectingWebSocket(webSocketURL('/football'), [], {
                 debug: true,
@@ -137,8 +160,6 @@ export class Football extends React.Component<{}, state> {
         };
 
         x.ws.open();
-
-        super(x);
         this.state = x;
     }
 
@@ -173,12 +194,13 @@ export class Football extends React.Component<{}, state> {
                         borderLeft:border,
                         borderRight: column && column.id === 'lose_lay' ? 'solid 1px #bababa' : undefined,
                         padding:'2px 4px',
+                        fontStyle:'bold',
                     }
                 };
 
             }}
-            defaultPageSize={20}
-            pageSizeOptions = { [20, 30, 40, 50, 100] }
+            defaultPageSize={35}
+            pageSizeOptions = { [20, 35, 50, 100] }
             // Text
             previousText = {'Предыдущие'}
             nextText = {'Следующие'}
@@ -188,7 +210,7 @@ export class Football extends React.Component<{}, state> {
             ofText = {'из'}
             rowsText = {'строк'}
             onResizedChange = { (newResized: Resize[]) => {
-                console.log(newResized);
+                //console.log(newResized);
             } }
         />;
     }
