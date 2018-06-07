@@ -1,9 +1,9 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
-import { App } from "./components/App";
+import { Football } from "./components/Football/Football";
 
 ReactDOM.render(
-    <App  />,
+    <Football  />,
     document.getElementById("app")
 );
+

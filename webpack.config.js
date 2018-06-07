@@ -1,11 +1,9 @@
 module.exports = {
     mode:"development",
-    entry: ["./src/index.tsx", "./src/rpc.ts"],
+    entry: ["./src/index.tsx"],
     output: {
-        filename: "bundle.js",
-        path: "F:\\GOPATH\\src\\example.com\\frontsockets\\assets\\scripts"
-        //path: __dirname + "/dist"
-        //path: path.join(process.env.GOPATH, 'src', 'example.com', 'frontsockets', 'assets', 'scripts')
+        filename: "main.js",
+        path: __dirname + "/dist/scripts"
     },
 
     // Enable sourcemaps for debugging webpack's output.
@@ -37,6 +35,7 @@ module.exports = {
     // dependencies, which allows browsers to cache those libraries between builds.
     externals: {
         "react": "React",
-        "react-dom": "ReactDOM"
+        "react-dom": "ReactDOM",
+        "react-table":"ReactTable"
     }
 };

@@ -68,4 +68,4 @@ export class CustomStyling extends React.Component {
     }
 }
 
-export const App = () => <div> <Simple />  <CustomStyling /> </div>;
+export const App1 = () => <div> <Simple />  <CustomStyling /> </div>;
