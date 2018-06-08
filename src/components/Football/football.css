@@ -1,26 +1,25 @@
-.ReactTable  {
+table.football-table {
     border-spacing: 0;
     border-collapse: collapse;
     width: 100%;
 }
-/*table.footbal-table th {*/
-    /*position: sticky;*/
-    /*top: 1px;*/
-    /*background-color: #FFFFFF;*/
-    /*height: 40px;*/
-/*}*/
-
-.ReactTable .rt-th, .ReactTable .rt-td {
+table.football-table th {
+    position: sticky;
+    top: 1px;
+    background-color: #FFFFFF;
+    height: 40px;
+}
+table.football-table tr:nth-child(even) {
+    background-color: #e4e4e4;
+}
+table.football-table th, table.football-table td {
     border-bottom: 1px solid #bababa;
 
-    /*border-right: solid 1px #bababa;*/
-    /*border-left: solid 1px #bababa;*/
-}
-
-.ReactTable .rt-td {
-    text-align: left;
-    padding: 2px 4px;
     border-right: solid 1px #bababa;
     border-left: solid 1px #bababa;
 }
 
+table.football-table td {
+    text-align: left;
+    padding: 2px 4px;
+}

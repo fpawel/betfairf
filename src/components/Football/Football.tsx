@@ -2,215 +2,209 @@ import * as React from "react";
 import {apply_games_changes, Game, GamesChanges} from "./game";
 import ReconnectingWebSocket from "reconnectingwebsocket";
 import {webSocketURL} from "../../utils/utils";
-import ReactTable, {RowInfo} from 'react-table';
-import {Column, TableCellRenderer} from 'react-table';
+import "./football.css";
 
-interface state {
-    ws : ReconnectingWebSocket,
-    games : Game []
+enum Col {
+    order = 'order',
+    home = 'home',
+    score = 'score',
+    away = 'away',
+    time = 'time',
+    competition = 'competition',
+    country = 'country',
+    total_matched = 'total_matched',
+    total_available = 'total_available',
+    win_back = 'win_back',
+    win_lay = 'win_lay',
+    draw_back = 'draw_back',
+    draw_lay = 'draw_lay',
+    lose_back = 'lose_back',
+    lose_lay = 'lose_lay',
 }
 
-const cellMoney : TableCellRenderer = row => (
-    <div style={{
-        width: '100%',
-        fontStyle: 'italic',
-        textAlign: 'right',
-    }}>
-        {row.value ? row.value : ''} {row.value ? '$' : ''}
-    </div>
-);
+const cols = Object.keys(Col).map( (k) => k as any as Col);
 
-const cellCoeff : TableCellRenderer = row => (
-    <div style={{
-        width: '100%',
-        textAlign: 'right',
-    }}>
-        {row.value ? row.value : ''}
-    </div>
-);
 
-const columns : Column[] = [
-    {
-        Header:'№',
-        accessor:'Order',
-        width : 40,
-    },
-    {
-        Header:'Дома',
-        accessor:'home',
-    },
-    {
-        Header:'Счёт',
-        accessor:'Score',
-        width : 70,
-    },
-    {
-        Header:'В гостях',
-        accessor:'away',
-    },
-    {
-        Header:'Время',
-        accessor:'time',
-        width : 130,
-        Cell: row => (
-            <div style={{
-                width: '100%',
-                textAlign: 'center',
-                fontStyle: 'italic',
-            }}>
-                {row.value}
-            </div>
-        )
-    },
-    {
-        Header:'Чемпионат',
-        accessor:'competition',
-        width : 200,
-    },
-    {
-        Header:'Страна',
-        accessor:'country',
-        width : 120,
-        Cell: row => (
-            <div style={{
-                width: '100%',
-                textAlign: 'center',
-            }}>
-                {row.value}
-            </div>
-        )
-    },
-    {
-        Header:'В паре',
-        accessor:'total_matched',
-        Cell: cellMoney,
-        width : 70,
-    },
-    {
-        Header:'Не в паре',
-        accessor:'total_available',
-        Cell: cellMoney,
-        width : 70,
-    },
-    {
-        Header:'П1+',
-        accessor:'win_back',
-        Cell: cellCoeff,
-        width : 70,
-    },
-    {
-        Header:'П1-',
-        accessor:'win_lay',
-        Cell: cellCoeff,
-        width : 70,
-    },
-    {
-        Header:'Н+',
-        accessor:'draw_back',
-        Cell: cellCoeff,
-        width : 70,
-    },
-    {
-        Header:'Н-',
-        accessor:'draw_lay',
-        Cell: cellCoeff,
-        width : 70,
-    },
-    {
-        Header:'П+',
-        accessor:'win_back',
-        Cell: cellCoeff,
-        width : 70,
-    },
-    {
-        Header:'П2-',
-        accessor:'lose_back',
-        Cell: cellCoeff,
-        width : 70,
-    },
 
-    {
-        Header:'П2+',
-        accessor:'lose_lay',
-        Cell: cellCoeff,
-        width : 70,
-    },
-];
+const renderCoefficient = (v:number) : React.ReactNode => v ? `${v}` : '';
+const renderDollar = (v:number) : React.ReactNode => v ? `${v}$` : '';
+const leftAlignItalic : React.CSSProperties = {
+    textAlign:"right",
+    fontStyle:"italic",
+};
+
+const col_info = (x: Col) : {
+    title: string,
+    value: (x: Game) => React.ReactNode,
+    style?: React.CSSProperties,
+} => {
+    switch (x) {
+        case Col.order:
+            return {
+                title: '№',
+                value: (x) =>  x.order + 1 ,
+            };
+
+        case Col.home:
+            return {
+                title: 'Дома',
+                value: (x) => x.home,
+                style: { textAlign:"center" }
+            };
+
+        case Col.away:
+            return {
+                title: 'В гостях',
+                value: (x) =>  x.away,
+                style: { textAlign:"center" }
+            };
+
+        case Col.score:
+            return {
+                title: 'Счёт',
+                value: (x) =>   x.in_play ?  `${x.score_home} - ${x.score_away}` : '' ,
+                style: { textAlign:"center" }
+            };
+
+        case Col.time:
+            return {
+                title: 'Время',
+                value: (x) =>   x.time,
+                style: { textAlign:"center" }
+            };
+
+        case Col.competition:
+            return {
+                title: 'Чемпионат',
+                value: (x) =>  x.competition,
+            };
+
+        case Col.country:
+            return {
+                title: 'Страна',
+                value: (x) =>  x.country,
+            };
+
+        case Col.total_matched:
+            return {
+                title: 'В паре',
+                value: (x) =>  renderDollar(x.total_matched),
+                style: leftAlignItalic,
+            };
+
+        case Col.total_available:
+            return {
+                title: 'Не в паре',
+                value: (x) =>  renderDollar(x.total_available),
+                style: leftAlignItalic,
+            };
+
+        case Col.win_back:
+            return {
+                title: 'П1+',
+                value: (x) =>  renderCoefficient(x.win_back),
+                style: leftAlignItalic,
+            };
+
+        case Col.win_lay:
+            return {
+                title: 'П1-',
+                value: (x) =>  renderCoefficient(x.win_lay),
+                style: leftAlignItalic,
+            };
+
+        case Col.draw_back:
+            return {
+                title: 'Н+',
+                value: (x) =>  renderCoefficient(x.draw_back),
+                style: leftAlignItalic,
+            };
+
+        case Col.draw_lay:
+            return {
+                title: 'Н-',
+                value: (x) =>  renderCoefficient(x.draw_lay),
+                style: leftAlignItalic,
+            };
+
+        case Col.lose_back:
+            return {
+                title: 'П2+',
+                value: (x) =>  renderCoefficient(x.lose_lay),
+                style: leftAlignItalic,
+            };
+
+        case Col.lose_lay:
+            return {
+                title: 'П2-',
+                value: (x) =>  renderCoefficient(x.lose_lay),
+                style: leftAlignItalic,
+            };
+    }
+
+
+};
+
+type sort_dir = 'asc' | 'dec';
+
+interface state {
+    ws: ReconnectingWebSocket,
+    games: Game []
+    sort_col: Col;
+    sort_dir: sort_dir;
+}
 
 
 
 export class Football extends React.Component<{}, state> {
 
-    constructor(props:{}){
+    constructor(props: {}) {
         super(props);
-        let x = {
-            ws : new ReconnectingWebSocket(webSocketURL('/football'), [], {
+        this.state = {
+            ws: new ReconnectingWebSocket(webSocketURL('/football'), [], {
                 debug: true,
                 automaticOpen: false,
             }),
-            games : []
+            games: [],
+            sort_col: Col.order,
+            sort_dir: 'asc',
         };
-        x.ws.onmessage = (event) => {
-            this.setState( (prev) : state =>{
+        this.state.ws.onmessage = (event) => {
+            this.setState((x: state): state => {
                 return {
-                    ws:prev.ws,
-                    games:apply_games_changes(prev.games, new GamesChanges(JSON.parse(event.data))),
+                    ...x,
+                    games: apply_games_changes(x.games, new GamesChanges(JSON.parse(event.data))),
                 };
             });
         };
 
-        x.ws.open();
-        this.state = x;
+        this.state.ws.open();
     }
 
     render() {
-        const border = 'solid 1px #bababa';
-        return <ReactTable
-            columns={columns}
-            data={this.state.games}
-            getTrProps = {(finalState: any, rowInfo?: RowInfo) => {
-                return {
-                    style: {
-                        background: (rowInfo && rowInfo.viewIndex % 2 ) ? "#e4e4e4" : undefined
+        return <table className={'football-table'}>
+            <thead>
+            <tr>
+                {cols.map((x) => <th key={x}> {col_info(x).title} </th>)}
+            </tr>
+            </thead>
+            <tbody>
+            {this.state.games.map((x) =>
+                <tr key={x.id}>
+                    {
+                        cols.map((c) =>
+                        {
+                            let a = col_info(c);
+                            return <td key={c} style={{...a.style}} >
+                                {a.value(x)}
+                            </td>;
+                        })
                     }
-                };
-
-            }}
-            getTdProps = {(finalState: any, rowInfo?: RowInfo, column?: Column) => {
-                return {
-                    style: {
-                        borderLeft:border,
-                        borderRight: column && column.id === 'lose_lay' ? border : undefined,
-                        borderTop:border,
-                        borderBottom: rowInfo && (rowInfo.viewIndex === rowInfo.pageSize-1) ? border : undefined,
-                        padding:'2px 4px',
-                    }
-                };
-
-            }}
-            getTheadThProps = {(finalState: any, rowInfo?: RowInfo, column?: Column) => {
-                return {
-                    style: {
-                        borderTop:border,
-                        borderLeft:border,
-                        borderRight: column && column.id === 'lose_lay' ? 'solid 1px #bababa' : undefined,
-                        padding:'2px 4px',
-                        fontStyle:'bold',
-                    }
-                };
-
-            }}
-            defaultPageSize={35}
-            pageSizeOptions = { [20, 35, 50, this.state.games.length] }
-            // Text
-            previousText = {'Предыдущие'}
-            nextText = {'Следующие'}
-            loadingText = { 'Загрузка данных...' }
-            noDataText = {'Нет футбольных игр!'}
-            pageText = {'Страница'}
-            ofText = {'из'}
-            rowsText = {'строк'}
-        />;
+                </tr>
+            )}
+            </tbody>
+        </table>
     }
 }
+
 
