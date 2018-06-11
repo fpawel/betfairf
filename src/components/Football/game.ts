@@ -194,6 +194,10 @@ export class GamesChanges {
 
 export function apply_games_changes(games: Game[], gamesChanges: GamesChanges) {
 
+    if (gamesChanges.reset) {
+        return gamesChanges.new;
+    }
+
     const u = getGamesChanges(gamesChanges);
 
     let nextGames = gamesChanges.new;
@@ -210,13 +214,22 @@ export function apply_games_changes(games: Game[], gamesChanges: GamesChanges) {
     nextGames.sort((x, y) => x.order - y.order);
 
     let id_game = new Map<number, Game>();
+    let order_game = new Map<number, Game>();
+
     for (let x of nextGames) {
+        const formatGame = (x: Game) => `$${x.order} ${x.home} ${x.away}`;
+
         const y = id_game.get(x.id);
         if (y) {
-            const formatGame = (x: Game) => `$${x.order} ${x.home} ${x.away}`;
-            throw (`Assert unique game id: ${formatGame(x)} and ${formatGame(y)}`);
+            return `assert unique game id: ${formatGame(x)} and ${formatGame(y)}`;
         }
         id_game.set(x.id, x);
+
+        const z = order_game.get(x.order);
+        if (z) {
+            return `assert unique game order: ${formatGame(x)} and ${formatGame(z)}`;
+        }
+        order_game.set(x.order, x);
     }
 
     return nextGames;

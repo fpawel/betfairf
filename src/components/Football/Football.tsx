@@ -141,8 +141,6 @@ const col_info = (x: Col) : {
                 style: leftAlignItalic,
             };
     }
-
-
 };
 
 type sort_dir = 'asc' | 'desc';
@@ -154,41 +152,46 @@ interface state {
     sort_dir: sort_dir;
 }
 
-const renderCell = (c:Col, x:Game) => {
-    let a = col_info(c);
-    return <td key={c} style={{...a.style}} >
-        {a.value(x)}
-    </td>;
-};
-
-
-
-
 export class Football extends React.Component<{}, state> {
 
     constructor(props: {}) {
         super(props);
+        this.init();
+        this.renderHeadCell = this.renderHeadCell.bind(this);
+    }
+
+    init() {
+        const ws = new ReconnectingWebSocket(webSocketURL('/football'), [], {
+            debug: true,
+            automaticOpen: false,
+        });
+        ws.onmessage = (event) => {
+            this.setState((x: state): state => {
+                const v = apply_games_changes(x.games, new GamesChanges(JSON.parse(event.data)));
+                if (typeof v === 'string') {
+                    console.error(v);
+                    this.state.ws.close();
+                    this.init();
+                    return this.state;
+                }
+                return { ...x, games: v, };
+            });
+        };
+        ws.open();
         this.state = {
-            ws: new ReconnectingWebSocket(webSocketURL('/football'), [], {
-                debug: true,
-                automaticOpen: false,
-            }),
+            ws: ws,
             games: [],
             sort_col: Col.order,
             sort_dir: 'asc',
-        };
+        }
+    }
 
-        this.state.ws.onmessage = (event) => {
-            this.setState((x: state): state => {
-                return {
-                    ...x,
-                    games: apply_games_changes(x.games, new GamesChanges(JSON.parse(event.data))),
-                };
-            });
-        };
 
-        this.state.ws.open();
-        this.renderHeadCell = this.renderHeadCell.bind(this);
+    static renderCell (c:Col, x:Game) {
+        let a = col_info(c);
+        return <td key={c} style={{...a.style}} >
+            {a.value(x)}
+        </td>;
     }
 
     renderHeadCell (c:Col) {
@@ -211,7 +214,9 @@ export class Football extends React.Component<{}, state> {
                     fontWeight:'bold',
                     fontSize:16,
                     fontFamily: 'calibri, helvetica, arial, sans-serif'
-                }}>{ch}</span>
+                }}>
+                {ch}
+            </span>
         </th>;
     }
 
@@ -232,7 +237,7 @@ export class Football extends React.Component<{}, state> {
             <tbody>
             {games.map((x) =>
                 <tr key={x.id}>
-                    { cols.map((c) => renderCell(c,x) ) }
+                    { cols.map((c) => Football.renderCell(c,x) ) }
                 </tr>
             )}
             </tbody>
