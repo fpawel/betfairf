@@ -23,3 +23,8 @@ table.football-table td {
     text-align: left;
     padding: 2px 4px;
 }
+
+table.football-table th:hover {
+    background-color: darkgrey;
+    color: white;
+}

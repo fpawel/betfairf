@@ -145,7 +145,7 @@ const col_info = (x: Col) : {
 
 };
 
-type sort_dir = 'asc' | 'dec';
+type sort_dir = 'asc' | 'desc';
 
 interface state {
     ws: ReconnectingWebSocket,
@@ -153,6 +153,14 @@ interface state {
     sort_col: Col;
     sort_dir: sort_dir;
 }
+
+const renderCell = (c:Col, x:Game) => {
+    let a = col_info(c);
+    return <td key={c} style={{...a.style}} >
+        {a.value(x)}
+    </td>;
+};
+
 
 
 
@@ -169,6 +177,7 @@ export class Football extends React.Component<{}, state> {
             sort_col: Col.order,
             sort_dir: 'asc',
         };
+
         this.state.ws.onmessage = (event) => {
             this.setState((x: state): state => {
                 return {
@@ -179,27 +188,51 @@ export class Football extends React.Component<{}, state> {
         };
 
         this.state.ws.open();
+        this.renderHeadCell = this.renderHeadCell.bind(this);
+    }
+
+    renderHeadCell (c:Col) {
+        let a = col_info(c);
+        const [ch, color] =
+            this.state.sort_col === c
+                ? [ this.state.sort_dir === 'asc' ? '↓' : '↑', 'rgb(85, 85, 85)']
+                : ['↕', 'rgb(204, 204, 204)'];
+        return <th
+            key={c}
+
+            onClick={ (event) => {
+                this.setState({...this.state, sort_col: c, sort_dir: this.state.sort_dir === 'asc' ? 'desc' : 'asc'});
+            }}
+            style={{cursor:'pointer'}} >
+            {a.title}
+            <span
+                style={{
+                    color : color,
+                    fontWeight:'bold',
+                    fontSize:16,
+                    fontFamily: 'calibri, helvetica, arial, sans-serif'
+                }}>{ch}</span>
+        </th>;
     }
 
     render() {
+        const sortFun = col_info(this.state.sort_col).value;
+        let games = this.state.games.slice();
+        games.sort( (x, y) => {
+            const a :any = sortFun(x);
+            const b :any = sortFun(y);
+            return ((a < b) ? -1 : (a > b) ? 1 : 0) * (this.state.sort_dir === 'asc' ? 1 : -1);
+        });
         return <table className={'football-table'}>
             <thead>
             <tr>
-                {cols.map((x) => <th key={x}> {col_info(x).title} </th>)}
+                {cols.map(this.renderHeadCell)}
             </tr>
             </thead>
             <tbody>
-            {this.state.games.map((x) =>
+            {games.map((x) =>
                 <tr key={x.id}>
-                    {
-                        cols.map((c) =>
-                        {
-                            let a = col_info(c);
-                            return <td key={c} style={{...a.style}} >
-                                {a.value(x)}
-                            </td>;
-                        })
-                    }
+                    { cols.map((c) => renderCell(c,x) ) }
                 </tr>
             )}
             </tbody>
