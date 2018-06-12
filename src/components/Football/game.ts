@@ -217,7 +217,7 @@ export function apply_games_changes(games: Game[], gamesChanges: GamesChanges) {
     let order_game = new Map<number, Game>();
 
     for (let x of nextGames) {
-        const formatGame = (x: Game) => `$${x.order} ${x.home} ${x.away}`;
+        const formatGame = (x: Game) => `${x.order} ${x.home} ${x.away}`;
 
         const y = id_game.get(x.id);
         if (y) {

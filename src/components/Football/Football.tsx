@@ -156,7 +156,7 @@ export class Football extends React.Component<{}, state> {
 
     constructor(props: {}) {
         super(props);
-        this.init();
+        this.state = this.init();
         this.renderHeadCell = this.renderHeadCell.bind(this);
     }
 
@@ -170,9 +170,8 @@ export class Football extends React.Component<{}, state> {
                 const v = apply_games_changes(x.games, new GamesChanges(JSON.parse(event.data)));
                 if (typeof v === 'string') {
                     console.error(v);
-                    this.state.ws.close();
-                    this.init();
-                    return this.state;
+                    x.ws.close();
+                    return this.init();
                 }
                 return { ...x, games: v, };
             });
@@ -183,7 +182,8 @@ export class Football extends React.Component<{}, state> {
             games: [],
             sort_col: Col.order,
             sort_dir: 'asc',
-        }
+        };
+        return this.state;
     }
 
 
