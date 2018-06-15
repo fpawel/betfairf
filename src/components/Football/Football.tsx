@@ -35,110 +35,126 @@ const leftAlignItalic : React.CSSProperties = {
 
 const col_info = (x: Col) : {
     title: string,
-    value: (x: Game) => React.ReactNode,
+    node: (x: Game) => React.ReactNode,
     style?: React.CSSProperties,
+    sort_value: (x: Game) => string | number,
 } => {
     switch (x) {
         case Col.order:
             return {
                 title: '№',
-                value: (x) =>  x.order + 1 ,
+                node: (x) =>  x.order + 1 ,
+                sort_value: (x) =>  x.order,
             };
 
         case Col.home:
             return {
                 title: 'Дома',
-                value: (x) => x.home,
-                style: { textAlign:"center" }
+                node: (x) => x.home,
+                style: { textAlign:"center" },
+                sort_value: (x) =>  x.home,
             };
 
         case Col.away:
             return {
                 title: 'В гостях',
-                value: (x) =>  x.away,
-                style: { textAlign:"center" }
+                node: (x) =>  x.away,
+                style: { textAlign:"center" },
+                sort_value: (x) =>  x.away,
             };
 
         case Col.score:
             return {
                 title: 'Счёт',
-                value: (x) =>   x.in_play ?  `${x.score_home} - ${x.score_away}` : '' ,
-                style: { textAlign:"center" }
+                node: (x) =>   x.in_play ?  `${x.score_home} - ${x.score_away}` : '',
+                style: { textAlign:"center" },
+                sort_value: (x) => x.in_play ? `${x.score_home} - ${x.score_away}` : '',
             };
 
         case Col.time:
             return {
                 title: 'Время',
-                value: (x) =>   x.time,
-                style: { textAlign:"center" }
+                node: (x) =>   x.time,
+                style: { textAlign:"center" },
+                sort_value: (x) =>  x.time,
             };
 
         case Col.competition:
             return {
                 title: 'Чемпионат',
-                value: (x) =>  x.competition,
+                node: (x) =>  x.competition,
+                sort_value: (x) =>  x.competition,
             };
 
         case Col.country:
             return {
                 title: 'Страна',
-                value: (x) =>  x.country,
+                node: (x) =>  x.country,
+                sort_value: (x) =>  x.country,
             };
 
         case Col.total_matched:
             return {
                 title: 'В паре',
-                value: (x) =>  renderDollar(x.total_matched),
+                node: (x) =>  renderDollar(x.total_matched),
                 style: leftAlignItalic,
+                sort_value: (x) =>  x.total_matched,
             };
 
         case Col.total_available:
             return {
                 title: 'Не в паре',
-                value: (x) =>  renderDollar(x.total_available),
+                node: (x) =>  renderDollar(x.total_available),
                 style: leftAlignItalic,
+                sort_value: (x) =>  x.total_available,
             };
 
         case Col.win_back:
             return {
                 title: 'П1+',
-                value: (x) =>  renderCoefficient(x.win_back),
+                node: (x) =>  renderCoefficient(x.win_back),
                 style: leftAlignItalic,
+                sort_value: (x) =>  x.win_back,
             };
 
         case Col.win_lay:
             return {
                 title: 'П1-',
-                value: (x) =>  renderCoefficient(x.win_lay),
+                node: (x) =>  renderCoefficient(x.win_lay),
                 style: leftAlignItalic,
+                sort_value: (x) =>  x.win_lay,
             };
 
         case Col.draw_back:
             return {
                 title: 'Н+',
-                value: (x) =>  renderCoefficient(x.draw_back),
+                node: (x) =>  renderCoefficient(x.draw_back),
                 style: leftAlignItalic,
+                sort_value: (x) =>  x.draw_back,
             };
 
         case Col.draw_lay:
             return {
                 title: 'Н-',
-                value: (x) =>  renderCoefficient(x.draw_lay),
+                node: (x) =>  renderCoefficient(x.draw_lay),
                 style: leftAlignItalic,
+                sort_value: (x) =>  x.draw_lay,
             };
 
         case Col.lose_back:
             return {
                 title: 'П2+',
-                value: (x) =>  renderCoefficient(x.lose_lay),
+                node: (x) =>  renderCoefficient(x.lose_lay),
                 style: leftAlignItalic,
+                sort_value: (x) =>  x.lose_back,
             };
 
         case Col.lose_lay:
             return {
                 title: 'П2-',
-                value: (x) =>  renderCoefficient(x.lose_lay),
+                node: (x) =>  renderCoefficient(x.lose_lay),
                 style: leftAlignItalic,
+                sort_value: (x) =>  x.lose_lay,
             };
     }
 };
@@ -190,7 +206,7 @@ export class Football extends React.Component<{}, state> {
     static renderCell (c:Col, x:Game) {
         let a = col_info(c);
         return <td key={c} style={{...a.style}} >
-            {a.value(x)}
+            {a.node(x)}
         </td>;
     }
 
@@ -221,11 +237,11 @@ export class Football extends React.Component<{}, state> {
     }
 
     render() {
-        const sortFun = col_info(this.state.sort_col).value;
+        const sort_fun = col_info(this.state.sort_col).sort_value;
         let games = this.state.games.slice();
         games.sort( (x, y) => {
-            const a :any = sortFun(x);
-            const b :any = sortFun(y);
+            const a = sort_fun(x);
+            const b = sort_fun(y);
             return ((a < b) ? -1 : (a > b) ? 1 : 0) * (this.state.sort_dir === 'asc' ? 1 : -1);
         });
         return <table className={'football-table'}>
