@@ -6,7 +6,7 @@ table.football-table {
 table.football-table th {
     position: sticky;
     top: 1px;
-    background-color: #FFFFFF;
+    background-color: #e4e4e4;
     height: 40px;
 }
 table.football-table tr:nth-child(even) {
